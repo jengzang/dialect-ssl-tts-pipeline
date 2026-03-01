@@ -17,6 +17,18 @@
 - wav2vec 2.0
 - GPT-SoVITS
 
+**项目状态：** 核心模块已完成（4/10）
+
+---
+
+## 📚 文档导航
+
+- **[快速开始](docs/QUICKSTART.md)** - 5分钟快速上手指南
+- **[使用示例](docs/USAGE_EXAMPLES.md)** - 详细的使用场景和最佳实践
+- **[完成报告](docs/COMPLETION_REPORT.md)** - 项目实施总结和技术细节
+- **[项目路线图](docs/ROADMAP.md)** - 当前状态和未来计划
+- **[开发指南](CLAUDE.md)** - 开发规范和工作流
+
 ---
 
 ## 课程模块
