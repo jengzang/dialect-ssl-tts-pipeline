@@ -96,52 +96,111 @@ conda install -c conda-forge montreal-forced-aligner
 
 ## 运行方式
 
-### Lesson 4: SVM 元音分类器
+### Lesson 4: SVM 元音分类器 ✅
+
+**原理说明：**
+
+SVM (Support Vector Machine) 是一种经典的机器学习分类算法，通过寻找最优超平面来分隔不同类别的数据。在元音分类任务中，我们使用共振峰（F1, F2, F3）和时长作为特征，训练 SVM 模型来识别不同的元音。
+
+**特征说明：**
+- **F1, F2, F3**: 共振峰频率，反映声道共振特性
+- **时长**: 元音持续时间
+- **基频统计值**: mean, std, min, max（可选）
+
+**使用教程：**
 
 ```bash
-# 1. 解压课程材料
-cd material/lesson_4
-unzip 20251125_001617_svm_e575b55b.zip
-
-# 2. 提取特征
-python src/data_pipeline/feature_extractor.py \
-    --textgrid_dir material/lesson_4/TextGrid \
-    --audio_dir material/lesson_4/audio \
-    --output data/lesson_4_features.csv
-
-# 3. 训练模型
-python src/training/train_svm.py \
-    --data data/lesson_4_features.csv \
-    --target_vowels a e i \
-    --model_path checkpoints/svm_vowel.pkl
-
-# 4. 推理测试
-python src/training/train_svm.py \
-    --inference \
+# 训练模式
+python scripts/lesson_04_svm_vowel.py \
+    --mode train \
+    --audio_dir material/lesson_4/cantonese_v2 \
+    --textgrid_dir material/lesson_4/cantonese_v2_out_TG \
+    --target_vowels a e i o u \
     --model_path checkpoints/svm_vowel.pkl \
-    --test_data data/lesson_4_test.csv
+    --output_dir results/lesson_04
+
+# 推理模式
+python scripts/lesson_04_svm_vowel.py \
+    --mode inference \
+    --model_path checkpoints/svm_vowel.pkl \
+    --test_data results/lesson_04/features.csv \
+    --output_dir results/lesson_04_inference
 ```
 
-### Lesson 6: LSTM 声调分类
+**输出文件：**
+- `results/lesson_04/features.csv` - 提取的特征
+- `results/lesson_04/confusion_matrix.png` - 混淆矩阵
+- `results/lesson_04/tsne.png` - t-SNE 可视化
+- `results/lesson_04/feature_distribution.png` - 特征分布
+- `checkpoints/svm_vowel.pkl` - 训练好的模型
+
+---
+
+### Lesson 6: LSTM 声调分类 ✅
+
+**原理说明：**
+
+LSTM (Long Short-Term Memory) 是一种循环神经网络（RNN）的变体，特别适合处理序列数据。在声调分类任务中，我们使用基频（F0）序列作为输入，通过 LSTM 捕捉声调的时序变化模式。
+
+**模型架构：**
+1. **输入层**: 基频序列 + 统计特征（时间步 × 特征维度）
+2. **双向 LSTM**: 同时捕捉前向和后向的时序信息
+3. **注意力机制**: 自动学习关注重要的时间步
+4. **全连接层**: 分类输出（5 个声调类别）
+
+**特征说明：**
+- **基频点序列**: 10 个均匀采样的 F0 值
+- **统计特征**: f0_mean, f0_std, f0_min, f0_max, f0_range, f0_median, f0_skew, f0_kurtosis
+- **归一化特征**: norm_f0_mean, norm_f0_std
+- **差分特征**: delta_mean, delta2_mean（一阶和二阶差分）
+- **时长**: 音素持续时间
+
+**使用教程：**
 
 ```bash
-# 1. 准备数据
-python src/data_pipeline/extract_pitch.py \
-    --audio_dir material/lesson_6/audio \
-    --output data/lesson_6_pitch.csv
-
-# 2. 训练模型
-python src/training/train_lstm.py \
-    --data data/lesson_6_pitch.csv \
+# 训练模式
+python scripts/lesson_06_lstm_tone.py \
+    --mode train \
+    --data_file material/lesson_6/vowel_with_tone.csv \
+    --model_path checkpoints/lstm_tone.pth \
+    --output_dir results/lesson_06 \
     --epochs 50 \
     --batch_size 32 \
-    --model_path checkpoints/lstm_tone.pth
+    --test_size 0.2 \
+    --val_size 0.1
 
-# 3. 评估模型
-python src/evaluation/evaluate_lstm.py \
-    --model checkpoints/lstm_tone.pth \
-    --test_data data/lesson_6_test.csv
+# 推理模式
+python scripts/lesson_06_lstm_tone.py \
+    --mode inference \
+    --model_path checkpoints/lstm_tone.pth \
+    --test_data material/lesson_6/vowel_with_tone.csv \
+    --output_dir results/lesson_06_inference
 ```
+
+**训练参数说明：**
+- `--epochs`: 训练轮数（默认 50）
+- `--batch_size`: 批次大小（默认 32）
+- `--test_size`: 测试集比例（默认 0.2）
+- `--val_size`: 验证集比例（默认 0.1）
+- `--device`: 计算设备（auto, cpu, cuda）
+
+**输出文件：**
+- `results/lesson_06/confusion_matrix.png` - 混淆矩阵
+- `results/lesson_06/training_curves.png` - 训练曲线（损失和准确率）
+- `checkpoints/lstm_tone.pth` - 训练好的模型
+
+**训练技巧：**
+1. **早停机制**: 验证集损失连续 5 个 epoch 不下降时自动停止
+2. **学习率调度**: 验证集损失不下降时自动降低学习率
+3. **梯度裁剪**: 防止梯度爆炸
+4. **Dropout**: 防止过拟合（默认 0.3）
+
+**性能预期：**
+- 训练时间: 约 10-20 分钟（CPU）/ 2-5 分钟（GPU）
+- 测试准确率: >85%（取决于数据质量）
+- 内存占用: 约 2-4GB
+
+---
 
 ### Lesson 7: wav2vec IPA 识别
 
@@ -301,6 +360,26 @@ JNU/
 ## 更新日志
 
 ### 2026-03-02
+
+**阶段 3: Lesson 6 (LSTM 声调分类器)（已完成）**
+- 实现音频处理工具（src/data_pipeline/audio_utils.py）
+  - 音频加载和重采样
+  - 基频序列提取
+  - 基频统计特征计算
+  - 归一化和差分特征
+- 实现 LSTM 模型（src/models/lstm_tone.py）
+  - 双向 LSTM 架构
+  - 注意力机制
+  - 支持变长序列
+- 实现 LSTM 训练器（src/training/lstm_trainer.py）
+  - 完整的训练循环
+  - 早停机制
+  - 学习率调度
+  - 训练曲线记录
+- 实现 CLI 脚本（scripts/lesson_06_lstm_tone.py）
+  - 支持训练模式和推理模式
+  - 数据加载和预处理
+  - 训练曲线可视化
 
 **阶段 1: 基础设施搭建（已完成）**
 - 实现配置加载器（src/utils/config_loader.py）
