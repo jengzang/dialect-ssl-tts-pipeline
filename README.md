@@ -202,11 +202,91 @@ python scripts/lesson_06_lstm_tone.py \
 
 ---
 
-### Lesson 7: wav2vec IPA 识别
+### Lesson 7: wav2vec IPA 识别 ✅
+
+**原理说明：**
+
+wav2vec 2.0 是 Facebook AI 提出的自监督学习模型，通过在大量无标注音频上预训练，学习通用的语音表示。在 IPA（国际音标）识别任务中，我们使用预训练的 wav2vec 2.0 模型进行微调。
+
+**模型架构：**
+1. **特征提取器**: CNN 编码器，将原始音频转换为特征序列
+2. **Transformer 编码器**: 多层 Transformer，学习上下文表示
+3. **CTC 解码器**: 连接时序分类（CTC）头，输出音素序列
+
+**预训练-微调范式：**
+- **预训练**: 在大规模无标注音频上学习通用表示（对比学习）
+- **微调**: 在小规模标注数据上微调 CTC 头，适应特定任务
+
+**特征说明：**
+- **输入**: 原始音频波形（16kHz 采样率）
+- **输出**: IPA 音素序列
+- **词汇表**: 自动从训练数据提取的音素集合
+
+**使用教程：**
 
 ```bash
-# 1. 准备数据
-python src/data_pipeline/prepare_wav2vec_data.py \
+# 安装额外依赖
+pip install transformers==4.35.2 datasets==2.14.6 evaluate==0.4.1
+
+# 训练模式（从 CSV）
+python scripts/lesson_07_wav2vec_ipa.py \
+    --mode train \
+    --csv_file material/lesson_7/data.csv \
+    --audio_column audio_path \
+    --text_column ipa_text \
+    --model_name facebook/wav2vec2-base \
+    --output_dir checkpoints/wav2vec_ipa \
+    --epochs 10
+
+# 训练模式（从目录）
+python scripts/lesson_07_wav2vec_ipa.py \
+    --mode train \
+    --data_dir material/lesson_7/audio \
+    --transcript_file material/lesson_7/transcripts.txt \
+    --model_name facebook/wav2vec2-base \
+    --output_dir checkpoints/wav2vec_ipa \
+    --epochs 10
+
+# 推理模式
+python scripts/lesson_07_wav2vec_ipa.py \
+    --mode inference \
+    --model_path checkpoints/wav2vec_ipa \
+    --audio_file test.wav
+```
+
+**训练参数说明：**
+- `--model_name`: 预训练模型名称（默认 facebook/wav2vec2-base）
+- `--epochs`: 训练轮数（默认 10）
+- `--csv_file`: CSV 数据文件（包含音频路径和文本）
+- `--data_dir`: 音频文件目录
+- `--transcript_file`: 转录文件（格式：audio_file|text）
+
+**输出文件：**
+- `checkpoints/wav2vec_ipa/` - 微调后的模型
+- `checkpoints/wav2vec_ipa/checkpoint-*/` - 训练检查点
+- `logs/lesson_07_wav2vec_*.log` - 训练日志
+
+**训练技巧：**
+1. **冻结特征提取器**: 只微调 Transformer 和 CTC 头，加快训练
+2. **梯度累积**: 在小 GPU 上模拟大批次训练
+3. **混合精度训练**: 使用 FP16 加速训练，减少显存占用
+4. **学习率预热**: 前 N 步逐渐增加学习率，提高稳定性
+5. **早停**: 根据验证集 WER 自动停止训练
+
+**性能预期：**
+- 训练时间: 约 2-4 小时（GPU）/ 不推荐 CPU
+- 测试 WER: <20%（取决于数据质量和数量）
+- 显存占用: 约 8-12GB（batch_size=8）
+- 最小数据量: 建议 >1 小时标注音频
+
+**评估指标：**
+- **WER (Word Error Rate)**: 词错误率
+- **CER (Character Error Rate)**: 字符错误率
+- **PER (Phoneme Error Rate)**: 音素错误率
+
+---
+
+## 核心模块说明
     --audio_dir material/lesson_7/audio \
     --transcript_file material/lesson_7/transcripts.txt \
     --output_dir data/lesson_7_wav2vec
@@ -360,6 +440,27 @@ JNU/
 ## 更新日志
 
 ### 2026-03-02
+
+**阶段 4: Lesson 7 (wav2vec IPA 识别器)（已完成）**
+- 实现 wav2vec 数据集模块（src/data_pipeline/wav2vec_dataset.py）
+  - 从 CSV 构建 HuggingFace Dataset
+  - 从目录构建 Dataset
+  - 数据集划分和保存
+  - DataCollatorCTCWithPadding（动态填充）
+- 实现 wav2vec 模型（src/models/wav2vec_ipa.py）
+  - 基于 HuggingFace Transformers
+  - Wav2Vec2ForCTC 微调
+  - 自动创建词汇表
+  - CTC 解码
+- 实现 wav2vec 训练器（src/training/wav2vec_trainer.py）
+  - 封装 HuggingFace Trainer
+  - WER 指标计算
+  - 混合精度训练
+  - 学习率预热
+- 实现 CLI 脚本（scripts/lesson_07_wav2vec_ipa.py）
+  - 支持训练模式和推理模式
+  - 支持 CSV 和目录两种数据格式
+  - 自动依赖检查
 
 **阶段 3: Lesson 6 (LSTM 声调分类器)（已完成）**
 - 实现音频处理工具（src/data_pipeline/audio_utils.py）
