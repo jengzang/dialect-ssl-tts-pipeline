@@ -301,6 +301,44 @@ JNU/
 ## 更新日志
 
 ### 2026-03-02
+
+**阶段 1: 基础设施搭建（已完成）**
+- 实现配置加载器（src/utils/config_loader.py）
+- 实现日志管理系统（src/utils/logger.py）
+- 实现设备管理器（src/utils/device_manager.py）
+- 实现抽象基类：
+  - 数据处理基类（src/data_pipeline/base.py）
+  - 模型基类（src/models/base.py）
+  - 训练器基类（src/training/base_trainer.py）
+- 创建基础设施验证脚本（scripts/test_infrastructure.py）
+
+**阶段 2: Lesson 4 (SVM) 实现（已完成）**
+- 实现 Praat 特征提取器（src/data_pipeline/feature_extractor.py）
+  - 支持批量提取共振峰（F1/F2/F3）
+  - 支持基频统计值提取（mean/std/min/max）
+  - 支持时长特征提取
+- 实现数据集构建器（src/data_pipeline/dataset_builder.py）
+  - 支持数据集划分（train/test）
+  - 支持特征归一化
+  - 支持标签编码
+- 实现 SVM 分类器（src/models/svm_classifier.py）
+  - 基于 sklearn 的 SVM 实现
+  - 支持多类分类
+  - 支持概率预测
+- 实现评估指标模块（src/evaluation/metrics.py）
+  - 准确率、精确率、召回率、F1 分数
+  - 混淆矩阵
+  - 分类报告
+- 实现可视化模块（src/evaluation/visualizer.py）
+  - 混淆矩阵热力图
+  - t-SNE 降维可视化
+  - 特征分布图
+- 实现 CLI 脚本（scripts/lesson_04_svm_vowel.py）
+  - 支持训练模式和推理模式
+  - 完整的端到端流程
+  - 命令行参数控制
+
+**项目初始化**
 - 初始化项目结构
 - 创建 CLAUDE.md 项目指南
 - 创建 README.md 项目文档
