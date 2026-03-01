@@ -1,0 +1,98 @@
+# 项目配置文件
+
+# 路径配置
+paths:
+  data_dir: data/
+  checkpoint_dir: checkpoints/
+  result_dir: results/
+  log_dir: logs/
+  material_dir: material/
+
+# SVM 配置
+svm:
+  kernel: rbf
+  C: 1.0
+  gamma: auto
+  test_size: 0.25
+  random_state: 42
+
+# LSTM 配置
+lstm:
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.3
+  learning_rate: 0.001
+  batch_size: 32
+  epochs: 50
+  early_stopping_patience: 5
+
+# wav2vec 配置
+wav2vec:
+  model_name: facebook/wav2vec2-base
+  learning_rate: 1e-4
+  warmup_steps: 500
+  freeze_feature_encoder: true
+  batch_size: 8
+  epochs: 10
+  gradient_accumulation_steps: 2
+
+# GPT-SoVITS 配置
+gpt_sovits:
+  reference_audio_length: 5  # seconds
+  sampling_rate: 32000
+  batch_size: 4
+
+# 特征提取配置
+feature_extraction:
+  # Praat 参数
+  pitch:
+    time_step: 0.01
+    pitch_floor: 75
+    pitch_ceiling: 600
+
+  formants:
+    max_formant: 5500  # Hz
+    num_formants: 5
+    window_length: 0.025
+
+  mfcc:
+    n_mfcc: 13
+    n_fft: 2048
+    hop_length: 512
+
+# MFA 配置
+mfa:
+  acoustic_model: mandarin_mfa
+  dictionary: mandarin_pinyin
+  num_jobs: 4
+
+# 训练配置
+training:
+  device: auto  # auto, cpu, cuda
+  seed: 42
+  num_workers: 4
+  pin_memory: true
+
+# 日志配置
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  use_tensorboard: true
+  use_wandb: false
+  wandb_project: dialect-speech
+
+# 评估配置
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+
+  visualizations:
+    - confusion_matrix
+    - tsne
+    - roc_curve
+
+  save_predictions: true
+  save_errors: true
