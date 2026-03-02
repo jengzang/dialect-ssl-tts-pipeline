@@ -17,7 +17,7 @@
 - wav2vec 2.0
 - GPT-SoVITS
 
-**项目状态：** 核心模块已完成（8/10） + LLM 训练路径（4/7）
+**项目状态：** 核心模块已完成（8/10） + LLM 训练路径（5/7）
 
 ---
 
@@ -32,7 +32,8 @@
 - **[Project 1 报告](docs/PROJECT_01_COMPLETION_REPORT.md)** - 增强评估系统
 - **[Project 2 报告](docs/PROJECT_02_COMPLETION_REPORT.md)** - 超参数优化
 - **[Project 3 报告](docs/PROJECT_03_COMPLETION_REPORT.md)** - 多任务学习
-- **[Project 4 报告](docs/PROJECT_04_COMPLETION_REPORT.md)** - 指令微调 ⭐ 新增
+- **[Project 4 报告](docs/PROJECT_04_COMPLETION_REPORT.md)** - 指令微调
+- **[Project 5 报告](docs/PROJECT_05_COMPLETION_REPORT.md)** - 模型比较与缩放定律 ⭐ 新增
 
 ---
 
@@ -695,6 +696,26 @@ JNU/
 ## 更新日志
 
 ### 2026-03-02
+
+**LLM 训练路径 - Project 5: 模型比较与缩放定律（已完成）**
+- 实现模型工厂（src/models/model_factory.py）
+  - 统一模型创建接口
+  - 支持多种 GPT-2 配置（25M-117M 参数）
+  - LoRA 参数高效微调集成
+  - 自动设备管理
+- 实现缩放分析器（src/evaluation/scaling_analysis.py）
+  - 参数缩放定律分析（Performance ∝ Params^α）
+  - 效率指标计算（参数/内存/速度效率）
+  - 对数线性回归拟合
+  - 4 种可视化图表生成
+- 实现模型比较 CLI（scripts/model_comparison.py）
+  - list/simulate/compare/analyze 四种模式
+  - 推理基准测试
+  - 自动化实验流程
+- 测试验证（scripts/test_project_05.py）
+  - 模型工厂测试通过
+  - 缩放分析测试通过（R²=0.996）
+  - 生成完整分析报告和图表
 
 **阶段 8: Lesson 10 (方言虚拟人)（已完成）**
 - 实现 GPT-SoVITS 模型封装（src/models/gpt_sovits_model.py）
