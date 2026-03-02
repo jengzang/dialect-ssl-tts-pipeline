@@ -21,25 +21,115 @@
 
 ---
 
-## 📚 文档导航
+## 🚀 快速开始（5分钟验证）
 
-- **[快速开始](docs/QUICKSTART.md)** - 5分钟快速上手指南
-- **[使用示例](docs/USAGE_EXAMPLES.md)** - 详细的使用场景和最佳实践
-- **[完成报告](docs/COMPLETION_REPORT.md)** - 项目实施总结和技术细节
-- **[项目路线图](docs/ROADMAP.md)** - 当前状态和未来计划
-- **[开发指南](CLAUDE.md)** - 开发规范和工作流
-- **[LLM 训练路径总体进展](docs/OVERALL_PROGRESS_REPORT.md)** - LLM 训练学习路径进度
-- **[Project 1 报告](docs/PROJECT_01_COMPLETION_REPORT.md)** - 增强评估系统
-- **[Project 2 报告](docs/PROJECT_02_COMPLETION_REPORT.md)** - 超参数优化
-- **[Project 3 报告](docs/PROJECT_03_COMPLETION_REPORT.md)** - 多任务学习
-- **[Project 4 报告](docs/PROJECT_04_COMPLETION_REPORT.md)** - 指令微调
-- **[Project 5 报告](docs/PROJECT_05_COMPLETION_REPORT.md)** - 模型比较与缩放定律
-- **[Project 6 报告](docs/PROJECT_06_COMPLETION_REPORT.md)** - 高级微调技术
-- **[Project 7 报告](docs/PROJECT_07_COMPLETION_REPORT.md)** - RLHF 与人类反馈 ⭐ 新增
+### 第一步：环境准备
+
+```bash
+# 1. 创建虚拟环境
+conda create -n dialect-speech python=3.10
+conda activate dialect-speech
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 或使用国内镜像（推荐）
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+### 第二步：下载必需模型
+
+```bash
+# 下载小型模型（~900MB，必需）
+python scripts/download_models.py --category small --yes
+
+# 如果下载失败，使用国内镜像：
+# export HF_ENDPOINT=https://hf-mirror.com  # Linux/Mac
+# set HF_ENDPOINT=https://hf-mirror.com     # Windows
+```
+
+### 第三步：运行测试验证
+
+```bash
+# 运行所有测试（约2分钟）
+python scripts/run_all_tests.py
+
+# 预期输出：
+# ✅ 6/6 tests passed
+# ✅ Total time: ~107 seconds
+```
+
+### 第四步：查看项目统计
+
+```bash
+# 查看代码统计
+python scripts/project_stats.py
+
+# 输出：
+# - 总代码行数：25,033
+# - 核心代码：18,286
+# - 7个完整项目
+```
+
+**🎉 如果所有测试通过，说明环境配置成功！**
 
 ---
 
-## 课程模块
+## 📚 LLM 训练路径（推荐从这里开始）
+
+这是本项目的核心内容，包含 7 个渐进式 LLM 训练项目：
+
+| 项目 | 名称 | 核心技术 | 测试状态 |
+|------|------|----------|----------|
+| Project 1 | 增强评估系统 | BLEU/ROUGE/ChrF | ✅ 通过 |
+| Project 2 | 超参数优化 | Optuna/贝叶斯优化 | ✅ 文档完成 |
+| Project 3 | 多任务学习 | 共享编码器 | ✅ 通过 |
+| Project 4 | 指令微调 | Few-shot/CoT | ✅ 通过 |
+| Project 5 | 模型比较 | 缩放定律 | ✅ 通过 |
+| Project 6 | 高级微调 | LoRA/Prefix/Adapter | ✅ 通过 |
+| Project 7 | RLHF | 人类反馈 | ✅ 通过 |
+
+**详细文档：**
+- [LLM 训练路径总体进展](docs/OVERALL_PROGRESS_REPORT.md)
+- [各项目完成报告](docs/) - PROJECT_01 到 PROJECT_07
+
+**快速体验：**
+```bash
+# 运行单个项目测试
+python scripts/test_project_01.py  # 增强评估
+python scripts/test_project_03.py  # 多任务学习
+python scripts/test_project_07.py  # RLHF
+```
+
+---
+
+## 📚 文档导航
+
+### 核心文档
+- **[快速开始](docs/QUICKSTART.md)** - 5分钟快速上手指南
+- **[开发指南](CLAUDE.md)** - 开发规范和工作流
+- **[完成报告](docs/COMPLETION_REPORT.md)** - 项目实施总结和技术细节
+
+### LLM 训练路径文档
+- **[总体进展](docs/OVERALL_PROGRESS_REPORT.md)** - LLM 训练学习路径进度
+- **[Project 1](docs/PROJECT_01_COMPLETION_REPORT.md)** - 增强评估系统
+- **[Project 2](docs/PROJECT_02_COMPLETION_REPORT.md)** - 超参数优化
+- **[Project 3](docs/PROJECT_03_COMPLETION_REPORT.md)** - 多任务学习
+- **[Project 4](docs/PROJECT_04_COMPLETION_REPORT.md)** - 指令微调
+- **[Project 5](docs/PROJECT_05_COMPLETION_REPORT.md)** - 模型比较与缩放定律
+- **[Project 6](docs/PROJECT_06_COMPLETION_REPORT.md)** - 高级微调技术
+- **[Project 7](docs/PROJECT_07_COMPLETION_REPORT.md)** - RLHF 与人类反馈 ⭐
+
+### 其他文档
+- **[使用示例](docs/USAGE_EXAMPLES.md)** - 详细的使用场景和最佳实践
+- **[项目路线图](docs/ROADMAP.md)** - 当前状态和未来计划
+- **[模型下载指南](docs/MODEL_DOWNLOAD_GUIDE.md)** - 完整的模型下载说明
+
+---
+
+## 📖 传统课程模块（基础学习路径）
+
+> **注意：** 这是传统的语音处理学习路径（Lesson 1-10）。如果你对 LLM 训练感兴趣，建议直接查看上面的"LLM 训练路径"部分。
 
 ### 📖 理论基础
 - **Lesson 1**: 大模型时代的语音合成与应用探讨
@@ -977,30 +1067,75 @@ python scripts/project_stats.py
 
 ## 常见问题
 
-### Q1: 如何选择 Python 版本？
+### LLM 训练路径相关
+
+#### Q1: 模型下载失败怎么办？
+A: 尝试以下方法：
+```bash
+# 方法1: 使用国内镜像
+export HF_ENDPOINT=https://hf-mirror.com  # Linux/Mac
+set HF_ENDPOINT=https://hf-mirror.com     # Windows
+python scripts/download_models.py --category small --yes
+
+# 方法2: 单独下载失败的模型
+python scripts/download_models.py --model gpt2 --yes
+
+# 方法3: 手动下载后放到 ~/.cache/huggingface/hub/
+```
+
+#### Q2: 测试失败怎么办？
+A: 检查以下几点：
+- 确保已下载必需模型（运行 `python scripts/download_models.py --category small --yes`）
+- 检查 PyTorch 版本（需要 2.5+）
+- 查看具体错误日志：`python scripts/test_project_XX.py`
+
+#### Q3: 如何只运行某个项目的测试？
+A:
+```bash
+python scripts/test_project_01.py  # 测试 Project 1
+python scripts/test_project_03.py  # 测试 Project 3
+python scripts/test_project_07.py  # 测试 Project 7
+```
+
+#### Q4: 训练时显存不足？
+A: 所有项目都使用参数高效微调（LoRA/Adapter），显存需求很低：
+- 最小显存：4GB（使用 CPU 也可以）
+- 推荐显存：8GB+
+- 如果仍然不足，减小 batch_size 或使用 CPU
+
+#### Q5: 如何查看项目统计？
+A:
+```bash
+python scripts/project_stats.py
+# 输出：代码行数、文件数、项目完成度等
+```
+
+### 传统课程模块相关
+
+#### Q6: 如何选择 Python 版本？
 A: 推荐使用 Python 3.10，兼容性最好。避免使用 3.12+（部分依赖可能不兼容）。
 
-### Q2: MFA 对齐失败怎么办？
+#### Q7: MFA 对齐失败怎么办？
 A: 检查以下几点：
 - 音频采样率是否为 16kHz
 - TextGrid 层命名是否为 `words` 和 `phones`
 - 发音词典格式是否正确
 - 音频文件和文本文件名是否一致
 
-### Q3: GPU 训练时显存不足？
+#### Q8: GPU 训练时显存不足？
 A: 尝试以下方法：
 - 减小 `batch_size`
 - 使用梯度累积
 - 使用混合精度训练（`torch.cuda.amp`）
 - 冻结部分模型层
 
-### Q4: 如何加速依赖安装？
+#### Q9: 如何加速依赖安装？
 A: 使用清华镜像：
 ```bash
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn
 ```
 
-### Q5: VS Code 无法识别虚拟环境？
+#### Q10: VS Code 无法识别虚拟环境？
 A:
 1. 右下角点击 Python 版本
 2. 选择 `dialect-speech` 环境
