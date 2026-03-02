@@ -8,10 +8,17 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import get_linear_schedule_with_warmup
 import logging
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from pathlib import Path
 from tqdm import tqdm
 import json
+
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+    logging.warning("WandB not available. Install: pip install wandb")
 
 from src.models.dialect_translator import DialectTranslator
 
@@ -112,12 +119,28 @@ class DialectTranslationTrainer:
         self.gradient_accumulation_steps = config.get('gradient_accumulation_steps', 4)
         self.max_grad_norm = config.get('max_grad_norm', 1.0)
 
+        # WandB 配置
+        self.use_wandb = config.get('use_wandb', False)
+        self.wandb_project = config.get('wandb_project', 'dialect-translation')
+        self.wandb_run_name = config.get('wandb_run_name', None)
+
         # 输出目录
         self.output_dir = Path(config.get('output_dir', 'checkpoints/dialect_translator'))
         self.output_dir.mkdir(exist_ok=True, parents=True)
 
         self.optimizer = None
         self.scheduler = None
+
+        # 初始化 WandB
+        if self.use_wandb and WANDB_AVAILABLE:
+            wandb.init(
+                project=self.wandb_project,
+                name=self.wandb_run_name,
+                config=config
+            )
+            logger.info("WandB initialized")
+        elif self.use_wandb and not WANDB_AVAILABLE:
+            logger.warning("WandB requested but not available")
 
     def prepare_model(self, quantization: bool = False):
         """准备模型"""
@@ -226,10 +249,24 @@ class DialectTranslationTrainer:
             train_loss = self._train_epoch(train_loader, global_step)
             logger.info(f"Train loss: {train_loss:.4f}")
 
+            # 记录到 WandB
+            if self.use_wandb and WANDB_AVAILABLE:
+                wandb.log({
+                    'epoch': epoch + 1,
+                    'train_loss': train_loss
+                })
+
             # 验证
             if val_loader:
                 val_loss = self._validate(val_loader)
                 logger.info(f"Val loss: {val_loss:.4f}")
+
+                # 记录到 WandB
+                if self.use_wandb and WANDB_AVAILABLE:
+                    wandb.log({
+                        'epoch': epoch + 1,
+                        'val_loss': val_loss
+                    })
 
                 # 保存最佳模型
                 if val_loss < best_val_loss:
@@ -241,6 +278,10 @@ class DialectTranslationTrainer:
             self._save_checkpoint(epoch, f'epoch_{epoch + 1}')
 
         logger.info("Training completed")
+
+        # 结束 WandB
+        if self.use_wandb and WANDB_AVAILABLE:
+            wandb.finish()
 
     def _train_epoch(self, train_loader: DataLoader, global_step: int) -> float:
         """训练一个 epoch"""
@@ -276,6 +317,14 @@ class DialectTranslationTrainer:
 
             # 更新进度条
             progress_bar.set_postfix({'loss': loss.item()})
+
+            # 记录到 WandB（每 10 步）
+            if self.use_wandb and WANDB_AVAILABLE and step % 10 == 0:
+                wandb.log({
+                    'train_step_loss': loss.item() * self.gradient_accumulation_steps,
+                    'learning_rate': self.scheduler.get_last_lr()[0],
+                    'global_step': global_step
+                })
 
         return total_loss / len(train_loader)
 

@@ -888,5 +888,55 @@ A:
 
 ---
 
+## 更新日志
+
+### 2026-03-02 - Project 1: 增强方言翻译评估系统
+
+**新增功能：**
+- 机器翻译评估指标（BLEU、ROUGE、ChrF、METEOR）
+- 数据增强模块（从 24 样本扩展到 500+ 样本）
+- WandB 实验跟踪集成
+- 完整的评估流程（evaluate 模式）
+
+**新增文件：**
+- `src/evaluation/mt_metrics.py` - MT 评估指标
+- `src/data_pipeline/dialect_augmentation.py` - 数据增强
+- `scripts/augment_dialect_data.py` - 数据增强脚本
+- `docs/project_01_enhanced_evaluation.md` - Project 1 文档
+
+**修改文件：**
+- `requirements.txt` - 添加 peft, accelerate, bitsandbytes, evaluate, sacrebleu, rouge-score
+- `src/training/dialect_translation_trainer.py` - 添加 WandB 日志
+- `scripts/lesson_08_dialect_translation.py` - 添加评估模式
+
+**使用示例：**
+```bash
+# 数据增强
+python scripts/augment_dialect_data.py \
+    --input material/lesson_8/dialect2mandarin.csv \
+    --output_dir data/dialect_translation \
+    --target_size 500
+
+# 训练（带 WandB）
+python scripts/lesson_08_dialect_translation.py \
+    --mode train \
+    --train_data data/dialect_translation/train.json \
+    --val_data data/dialect_translation/val.json \
+    --use_wandb
+
+# 评估
+python scripts/lesson_08_dialect_translation.py \
+    --mode evaluate \
+    --model_path checkpoints/dialect_translation_v2/best \
+    --test_data data/dialect_translation/test.json
+```
+
+**目标指标：**
+- BLEU-4 > 30
+- ROUGE-L F1 > 50
+- ChrF > 40
+
+---
+
 **项目维护者：** jengzang (不羁)
 **最后更新：** 2026-03-02

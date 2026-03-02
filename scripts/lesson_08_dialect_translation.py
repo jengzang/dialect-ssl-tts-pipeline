@@ -50,6 +50,7 @@ from src.utils.config_loader import ConfigLoader
 from src.utils.logger import setup_logger
 from src.models.dialect_translator import DialectTranslator
 from src.training.dialect_translation_trainer import DialectTranslationTrainer
+from src.evaluation.mt_metrics import evaluate_translation
 
 
 def parse_args():
@@ -62,7 +63,7 @@ def parse_args():
         '--mode',
         type=str,
         required=True,
-        choices=['train', 'inference', 'batch'],
+        choices=['train', 'inference', 'batch', 'evaluate'],
         help='运行模式'
     )
 
@@ -158,6 +159,25 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--use_wandb',
+        action='store_true',
+        help='使用 WandB 记录训练'
+    )
+
+    parser.add_argument(
+        '--wandb_project',
+        type=str,
+        default='dialect-translation',
+        help='WandB 项目名称'
+    )
+
+    parser.add_argument(
+        '--test_data',
+        type=str,
+        help='测试数据路径（用于评估）'
+    )
+
+    parser.add_argument(
         '--config',
         type=str,
         default='config.yaml',
@@ -183,7 +203,9 @@ def train_mode(args, logger):
         'learning_rate': args.learning_rate,
         'lora_r': args.lora_r,
         'lora_alpha': args.lora_alpha,
-        'max_length': 512
+        'max_length': 512,
+        'use_wandb': args.use_wandb,
+        'wandb_project': args.wandb_project
     }
 
     # 初始化训练器
@@ -294,6 +316,100 @@ def batch_mode(args, logger):
         return False
 
 
+def evaluate_mode(args, logger):
+    """评估模式"""
+    logger.info("=== Evaluation Mode ===")
+
+    if not args.model_path or not args.test_data:
+        logger.error("--model_path and --test_data are required")
+        return False
+
+    config = {
+        'model_name': args.model_name,
+        'max_length': 512
+    }
+
+    # 初始化翻译器
+    translator = DialectTranslator(config)
+
+    # 加载模型
+    try:
+        translator.load_lora_model(args.model_path)
+        logger.info(f"Model loaded from: {args.model_path}")
+    except Exception as e:
+        logger.error(f"Failed to load model: {e}")
+        return False
+
+    # 加载测试数据
+    try:
+        with open(args.test_data, 'r', encoding='utf-8') as f:
+            test_data = json.load(f)
+        logger.info(f"Loaded {len(test_data)} test samples")
+    except Exception as e:
+        logger.error(f"Failed to load test data: {e}")
+        return False
+
+    # 生成翻译
+    logger.info("Generating translations...")
+    dialect_texts = [item['dialect'] for item in test_data]
+    references = [item['mandarin'] for item in test_data]
+
+    try:
+        predictions = translator.batch_translate(
+            dialect_texts,
+            batch_size=args.batch_size
+        )
+    except Exception as e:
+        logger.error(f"Translation failed: {e}")
+        return False
+
+    # 计算评估指标
+    logger.info("Computing evaluation metrics...")
+    try:
+        # 创建输出目录
+        output_dir = Path(args.output_dir) / 'evaluation'
+        output_dir.mkdir(exist_ok=True, parents=True)
+
+        # 保存预测结果
+        predictions_path = output_dir / 'predictions.json'
+        with open(predictions_path, 'w', encoding='utf-8') as f:
+            results = [
+                {
+                    'dialect': d,
+                    'reference': r,
+                    'prediction': p
+                }
+                for d, r, p in zip(dialect_texts, references, predictions)
+            ]
+            json.dump(results, f, indent=2, ensure_ascii=False)
+        logger.info(f"Predictions saved to: {predictions_path}")
+
+        # 计算指标
+        metrics_path = output_dir / 'metrics.json'
+        metrics = evaluate_translation(
+            predictions=predictions,
+            references=references,
+            output_path=str(metrics_path)
+        )
+
+        # 打印主要指标
+        logger.info("=== Evaluation Results ===")
+        logger.info(f"BLEU-4: {metrics.get('bleu', 0):.2f}")
+        logger.info(f"ROUGE-L F1: {metrics.get('rougeL_fmeasure', 0):.2f}")
+        logger.info(f"ChrF: {metrics.get('chrf', 0):.2f}")
+        if 'meteor' in metrics:
+            logger.info(f"METEOR: {metrics.get('meteor', 0):.2f}")
+
+        logger.info(f"[OK] Evaluation completed. Results saved to: {output_dir}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Evaluation failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def main():
     """主函数"""
     args = parse_args()
@@ -316,6 +432,8 @@ def main():
         success = inference_mode(args, logger)
     elif args.mode == 'batch':
         success = batch_mode(args, logger)
+    elif args.mode == 'evaluate':
+        success = evaluate_mode(args, logger)
     else:
         logger.error(f"Unknown mode: {args.mode}")
         success = False
