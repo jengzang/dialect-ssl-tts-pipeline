@@ -17,7 +17,7 @@
 - wav2vec 2.0
 - GPT-SoVITS
 
-**项目状态：** 核心模块已完成（8/10） + LLM 训练路径（5/7）
+**项目状态：** 核心模块已完成（8/10） + LLM 训练路径（6/7）
 
 ---
 
@@ -33,7 +33,8 @@
 - **[Project 2 报告](docs/PROJECT_02_COMPLETION_REPORT.md)** - 超参数优化
 - **[Project 3 报告](docs/PROJECT_03_COMPLETION_REPORT.md)** - 多任务学习
 - **[Project 4 报告](docs/PROJECT_04_COMPLETION_REPORT.md)** - 指令微调
-- **[Project 5 报告](docs/PROJECT_05_COMPLETION_REPORT.md)** - 模型比较与缩放定律 ⭐ 新增
+- **[Project 5 报告](docs/PROJECT_05_COMPLETION_REPORT.md)** - 模型比较与缩放定律
+- **[Project 6 报告](docs/PROJECT_06_COMPLETION_REPORT.md)** - 高级微调技术 ⭐ 新增
 
 ---
 
@@ -696,6 +697,28 @@ JNU/
 ## 更新日志
 
 ### 2026-03-02
+
+**LLM 训练路径 - Project 6: 高级微调技术（已完成）**
+- 实现 Prefix Tuning 模型（src/models/prefix_tuning_model.py）
+  - Prefix 编码器（MLP 重参数化）
+  - 模型包装器（冻结预训练参数）
+  - 参数效率：13.36%（547K/4.1M）
+- 实现 Adapter Layers 模型（src/models/adapter_model.py）
+  - 瓶颈式 Adapter 层
+  - 模块化设计（每层独立）
+  - 参数效率：1.90%（69K/3.6M）⭐ 最高
+- 实现高级训练器（src/training/advanced_trainer.py）
+  - 统一接口支持 4 种方法（LoRA/Prefix/Adapter/Full）
+  - 混合精度训练（FP16/BF16）
+  - 自动参数和内存统计
+- 实现方法比较 CLI（scripts/advanced_finetuning.py）
+  - 多维度评估（参数/内存/速度）
+  - 自动化基准测试
+  - 最佳方法推荐
+- 测试验证（scripts/test_project_06.py）
+  - Prefix Tuning 测试通过
+  - Adapter 测试通过（最高参数效率）
+  - 方法比较测试通过
 
 **LLM 训练路径 - Project 5: 模型比较与缩放定律（已完成）**
 - 实现模型工厂（src/models/model_factory.py）
