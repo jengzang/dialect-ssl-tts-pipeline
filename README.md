@@ -17,7 +17,7 @@
 - wav2vec 2.0
 - GPT-SoVITS
 
-**项目状态：** 核心模块已完成（4/10）
+**项目状态：** 核心模块已完成（8/10）
 
 ---
 
@@ -214,7 +214,245 @@ python scripts/lesson_06_lstm_tone.py \
 
 ---
 
-### Lesson 7: wav2vec IPA 识别 ✅
+### Lesson 5: MFA 模型训练 ✅
+
+**原理说明：**
+
+Montreal Forced Aligner (MFA) 是一个强大的语音对齐工具，可以自动将音频和文本对齐，生成 TextGrid 文件。MFA 还支持训练自定义声学模型，适应特定的语言或方言。
+
+**功能说明：**
+- **语料验证**: 检查音频和文本配对
+- **声学模型训练**: 使用自定义语料训练模型
+- **模型测试**: 使用训练好的模型进行对齐
+
+**使用教程：**
+
+```bash
+# 验证语料
+python scripts/lesson_05_mfa_training.py --mode validate \
+    --corpus_dir data/mfa_corpus \
+    --dictionary_path data/dict.txt
+
+# 训练模型
+python scripts/lesson_05_mfa_training.py --mode train \
+    --corpus_dir data/mfa_corpus \
+    --dictionary_path data/dict.txt \
+    --output_dir checkpoints/mfa_model \
+    --num_jobs 4
+
+# 测试对齐
+python scripts/lesson_05_mfa_training.py --mode align \
+    --model_path checkpoints/mfa_model/acoustic_model.zip \
+    --test_corpus data/test_corpus \
+    --dictionary_path data/dict.txt \
+    --output_dir results/alignments
+
+# 列出可用模型
+python scripts/lesson_05_mfa_training.py --mode list_models \
+    --model_type acoustic
+```
+
+**语料目录结构：**
+```
+corpus_dir/
+    speaker1/
+        audio1.wav
+        audio1.txt
+        audio2.wav
+        audio2.txt
+    speaker2/
+        ...
+```
+
+**输出文件：**
+- `checkpoints/mfa_model/acoustic_model.zip` - 训练好的声学模型
+- `checkpoints/mfa_model/training_metadata.json` - 训练元数据
+- `results/alignments/*.TextGrid` - 对齐结果
+
+---
+
+### Lesson 8: 方言翻译 ✅
+
+**原理说明：**
+
+使用 LoRA (Low-Rank Adaptation) 技术微调大语言模型，实现方言到普通话的翻译。LoRA 是一种参数高效的微调方法，只需训练少量参数即可适应新任务。
+
+**模型架构：**
+- **基础模型**: Qwen/ChatGLM/LLaMA 等大语言模型
+- **LoRA 适配器**: 低秩矩阵分解，减少可训练参数
+- **量化支持**: 4-bit 量化，降低显存需求
+
+**数据格式（JSON）：**
+```json
+[
+    {
+        "dialect": "我今日好开心啊",
+        "mandarin": "我今天很开心"
+    },
+    ...
+]
+```
+
+**使用教程：**
+
+```bash
+# 训练模型
+python scripts/lesson_08_dialect_translation.py --mode train \
+    --model_name Qwen/Qwen-7B-Chat \
+    --train_data data/dialect_parallel.json \
+    --output_dir checkpoints/dialect_translator \
+    --epochs 3 \
+    --batch_size 4 \
+    --lora_r 8 \
+    --quantization
+
+# 推理翻译
+python scripts/lesson_08_dialect_translation.py --mode inference \
+    --model_path checkpoints/dialect_translator/best \
+    --dialect_text "我今日好开心啊"
+
+# 批量翻译
+python scripts/lesson_08_dialect_translation.py --mode batch \
+    --model_path checkpoints/dialect_translator/best \
+    --input_file data/test_dialect.txt \
+    --output_file results/translations.txt
+```
+
+**训练参数说明：**
+- `--lora_r`: LoRA rank（默认 8）
+- `--lora_alpha`: LoRA alpha（默认 32）
+- `--quantization`: 使用 4-bit 量化
+- `--learning_rate`: 学习率（默认 2e-4）
+
+**输出文件：**
+- `checkpoints/dialect_translator/best/` - 最佳模型
+- `checkpoints/dialect_translator/epoch_*/` - 各轮检查点
+- `results/translations.txt` - 翻译结果
+
+**性能预期：**
+- 训练时间: 约 1-2 小时（GPU，量化模式）
+- 显存占用: 约 8-12GB（4-bit 量化）
+- 最小数据量: 建议 >1000 对平行语料
+
+---
+
+### Lesson 9: 方言口音识别 ✅
+
+**原理说明：**
+
+基于 wav2vec 2.0 的方言口音分类器，通过微调预训练模型来识别不同的方言口音。使用全局平均池化提取音频级别的特征，然后通过分类头输出口音类别。
+
+**模型架构：**
+1. **特征提取器**: wav2vec 2.0 预训练编码器（冻结）
+2. **池化层**: 全局平均池化，将序列特征聚合为固定维度
+3. **分类头**: 全连接层 + Dropout + Softmax
+
+**使用教程：**
+
+```bash
+# 训练模式
+python scripts/lesson_09_accent_recognition.py --mode train \
+    --data_dir material/lesson_9/audio \
+    --label_file material/lesson_9/labels.csv \
+    --model_name facebook/wav2vec2-base \
+    --output_dir checkpoints/accent_classifier \
+    --epochs 20 \
+    --batch_size 8
+
+# 推理模式
+python scripts/lesson_09_accent_recognition.py --mode inference \
+    --model_path checkpoints/accent_classifier/best_model.pth \
+    --audio_file test.wav
+```
+
+**数据格式（CSV）：**
+```csv
+audio_path,accent
+audio1.wav,cantonese
+audio2.wav,mandarin
+audio3.wav,hakka
+```
+
+**输出文件：**
+- `checkpoints/accent_classifier/best_model.pth` - 最佳模型
+- `checkpoints/accent_classifier/training_history.json` - 训练历史
+- `results/lesson_09/confusion_matrix.png` - 混淆矩阵
+
+**性能预期：**
+- 训练时间: 约 30-60 分钟（GPU）
+- 测试准确率: >85%（取决于数据质量）
+- 显存占用: 约 6-8GB
+
+---
+
+### Lesson 10: 方言虚拟人 ✅
+
+**原理说明：**
+
+整合 GPT-SoVITS 语音合成和 Sadtalker 虚拟人技术，构建完整的方言虚拟人系统。GPT-SoVITS 实现零样本/少样本语音克隆，Sadtalker 从音频和图像生成虚拟人视频。
+
+**系统架构：**
+1. **语音合成**: GPT-SoVITS（5 秒参考音频即可克隆声音）
+2. **虚拟人生成**: Sadtalker（音频驱动的面部动画）
+3. **端到端流程**: 文本 → 语音 → 视频
+
+**使用教程：**
+
+```bash
+# 训练 TTS 模型
+python scripts/lesson_10_virtual_human.py --mode train \
+    --train_data_dir data/dialect_corpus \
+    --output_dir checkpoints/tts_model \
+    --epochs 10
+
+# 合成语音
+python scripts/lesson_10_virtual_human.py --mode synthesize \
+    --text "我今日好开心啊" \
+    --ref_audio data/ref.wav \
+    --ref_text "参考文本" \
+    --output results/synthesized.wav
+
+# 创建虚拟人视频
+python scripts/lesson_10_virtual_human.py --mode create_video \
+    --text "我今日好开心啊" \
+    --ref_audio data/ref.wav \
+    --ref_text "参考文本" \
+    --avatar_image data/avatar.jpg \
+    --output results/virtual_human.mp4
+
+# 批量创建虚拟人
+python scripts/lesson_10_virtual_human.py --mode batch \
+    --input_file data/texts.txt \
+    --ref_audio data/ref.wav \
+    --ref_text "参考文本" \
+    --avatar_image data/avatar.jpg \
+    --output_dir results/virtual_humans
+```
+
+**依赖安装：**
+```bash
+# GPT-SoVITS
+git clone https://github.com/RVC-Boss/GPT-SoVITS.git
+cd GPT-SoVITS
+pip install -r requirements.txt
+
+# Sadtalker
+git clone https://github.com/OpenTalker/SadTalker.git
+cd SadTalker
+pip install -r requirements.txt
+```
+
+**输出文件：**
+- `results/synthesized.wav` - 合成的语音
+- `results/virtual_human.mp4` - 虚拟人视频
+- `results/virtual_humans/` - 批量生成的视频
+
+**性能预期：**
+- 语音合成: 约 5-10 秒/句（GPU）
+- 视频生成: 约 30-60 秒/视频（GPU）
+- 显存占用: 约 6-10GB
+
+---
 
 **原理说明：**
 
@@ -452,6 +690,60 @@ JNU/
 ## 更新日志
 
 ### 2026-03-02
+
+**阶段 8: Lesson 10 (方言虚拟人)（已完成）**
+- 实现 GPT-SoVITS 模型封装（src/models/gpt_sovits_model.py）
+  - 语音合成接口
+  - 批量合成
+  - 语音克隆
+  - 模型微调
+- 实现虚拟人训练器（src/training/virtual_human_trainer.py）
+  - TTS 模型训练
+  - 语音合成
+  - Sadtalker 视频生成
+  - 批量创建虚拟人
+- 实现 CLI 脚本（scripts/lesson_10_virtual_human.py）
+  - 训练、合成、创建视频、批量模式
+  - 完整的端到端流程
+
+**阶段 7: Lesson 8 (方言翻译)（已完成）**
+- 实现方言翻译模型（src/models/dialect_translator.py）
+  - 基于 LoRA 的大模型微调
+  - 支持 Qwen/ChatGLM/LLaMA
+  - 4-bit 量化支持
+  - 批量翻译
+- 实现翻译训练器（src/training/dialect_translation_trainer.py）
+  - LoRA 微调流程
+  - 梯度累积
+  - 学习率预热
+  - 检查点保存
+- 实现 CLI 脚本（scripts/lesson_08_dialect_translation.py）
+  - 训练、推理、批量翻译模式
+
+**阶段 6: Lesson 9 (方言口音识别)（已完成）**
+- 实现口音分类器（src/models/accent_classifier.py）
+  - 基于 wav2vec 2.0
+  - 全局平均池化
+  - 多类分类
+- 实现口音训练器（src/training/accent_trainer.py）
+  - PyTorch 训练循环
+  - 早停机制
+  - 学习率调度
+- 实现 CLI 脚本（scripts/lesson_09_accent_recognition.py）
+  - 训练和推理模式
+
+**阶段 5: Lesson 5 (MFA 模型训练)（已完成）**
+- 实现 MFA 封装模块（src/data_pipeline/mfa_wrapper.py）
+  - 强制对齐接口
+  - 声学模型训练
+  - 语料验证
+  - 模型下载和管理
+- 实现 MFA 训练器（src/training/mfa_trainer.py）
+  - 语料准备
+  - 模型训练流程
+  - 元数据保存
+- 实现 CLI 脚本（scripts/lesson_05_mfa_training.py）
+  - 验证、训练、对齐、列出模型模式
 
 **阶段 4: Lesson 7 (wav2vec IPA 识别器)（已完成）**
 - 实现 wav2vec 数据集模块（src/data_pipeline/wav2vec_dataset.py）
