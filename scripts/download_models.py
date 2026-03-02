@@ -136,6 +136,11 @@ def main():
         action="store_true",
         help="列出所有模型"
     )
+    parser.add_argument(
+        "--yes", "-y",
+        action="store_true",
+        help="自动确认，跳过交互式提示"
+    )
 
     args = parser.parse_args()
 
@@ -179,10 +184,13 @@ def main():
     print(f"\n准备下载 {len(models_to_download)} 个模型\n")
 
     # 确认
-    response = input("是否继续？(y/n): ")
-    if response.lower() != 'y':
-        print("取消下载")
-        return
+    if not args.yes:
+        response = input("是否继续？(y/n): ")
+        if response.lower() != 'y':
+            print("取消下载")
+            return
+    else:
+        print("自动确认模式，开始下载...\n")
 
     # 下载模型
     results = {}

@@ -168,6 +168,14 @@ class RewardModelTrainer:
         self.tokenizer = tokenizer
         self.device = device
 
+        # 设置 padding token（如果没有的话）
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+            # 调整模型的 embedding 层大小以匹配 tokenizer
+            self.reward_model.base_model.resize_token_embeddings(len(self.tokenizer))
+            logger.info(f"Set pad_token to eos_token: {self.tokenizer.eos_token}")
+            logger.info(f"Resized token embeddings to {len(self.tokenizer)}")
+
         logger.info("RewardModelTrainer initialized")
 
     def compute_loss(
