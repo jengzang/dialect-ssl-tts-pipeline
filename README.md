@@ -17,7 +17,7 @@
 - wav2vec 2.0
 - GPT-SoVITS
 
-**项目状态：** 核心模块已完成（8/10） + LLM 训练路径（3/7）
+**项目状态：** 核心模块已完成（8/10） + LLM 训练路径（4/7）
 
 ---
 
@@ -28,10 +28,11 @@
 - **[完成报告](docs/COMPLETION_REPORT.md)** - 项目实施总结和技术细节
 - **[项目路线图](docs/ROADMAP.md)** - 当前状态和未来计划
 - **[开发指南](CLAUDE.md)** - 开发规范和工作流
-- **[LLM 训练路径总体进展](docs/OVERALL_PROGRESS_REPORT.md)** - LLM 训练学习路径进度 ⭐ 新增
+- **[LLM 训练路径总体进展](docs/OVERALL_PROGRESS_REPORT.md)** - LLM 训练学习路径进度
 - **[Project 1 报告](docs/PROJECT_01_COMPLETION_REPORT.md)** - 增强评估系统
 - **[Project 2 报告](docs/PROJECT_02_COMPLETION_REPORT.md)** - 超参数优化
-- **[Project 3 报告](docs/PROJECT_03_COMPLETION_REPORT.md)** - 多任务学习 ⭐ 新增
+- **[Project 3 报告](docs/PROJECT_03_COMPLETION_REPORT.md)** - 多任务学习
+- **[Project 4 报告](docs/PROJECT_04_COMPLETION_REPORT.md)** - 指令微调 ⭐ 新增
 
 ---
 
@@ -896,6 +897,65 @@ A:
 
 ---
 
+### 2026-03-02 - Project 4: 指令微调与提示工程
+
+**新增功能：**
+- 指令数据集构建器（支持 3 种模板风格）
+- 指令遵循模型（少样本 + 思维链推理）
+- 指令评估模块（多维度评估指标）
+- 完整的 CLI 工具（5 种模式）
+
+**新增文件：**
+- `src/data_pipeline/instruction_builder.py` - 指令数据集构建器
+- `src/models/instruction_tuned_model.py` - 指令遵循模型
+- `src/evaluation/instruction_eval.py` - 指令评估模块
+- `scripts/lesson_08_instruction_tuning.py` - CLI 工具
+- `scripts/test_project_04.py` - 测试脚本
+- `docs/PROJECT_04_COMPLETION_REPORT.md` - Project 4 完成报告
+
+**技术亮点：**
+- 参数高效：仅 0.79% 可训练参数（811K / 103M）
+- 少样本学习：支持 0-shot 到 5-shot
+- 思维链推理：鼓励逐步思考
+- 灵活模板：Alpaca, Vicuna, Simple
+
+**使用示例：**
+```bash
+# 创建指令数据集
+python scripts/lesson_08_instruction_tuning.py --mode create_dataset \
+    --translation_data data/dialect_parallel_train.json \
+    --classification_data data/accent_train.json \
+    --output_dir data/instruction_dataset \
+    --template_style alpaca
+
+# 训练
+python scripts/lesson_08_instruction_tuning.py --mode train \
+    --train_data data/instruction_dataset/train.json \
+    --val_data data/instruction_dataset/val.json \
+    --output_dir checkpoints/instruction_tuned
+
+# 零样本推理
+python scripts/lesson_08_instruction_tuning.py --mode inference \
+    --model_path checkpoints/instruction_tuned/best \
+    --instruction "请将以下方言翻译成普通话" \
+    --input "侬好啊"
+
+# 少样本推理
+python scripts/lesson_08_instruction_tuning.py --mode few_shot \
+    --model_path checkpoints/instruction_tuned/best \
+    --instruction "请将以下方言翻译成普通话" \
+    --examples_file data/few_shot_examples.json \
+    --input "侬吃饭了伐"
+```
+
+**测试结果：**
+- ✅ 指令构建器测试通过
+- ✅ 数据集创建测试通过（9 个指令）
+- ✅ 模型测试通过（loss=11.48, 0.79% 可训练参数）
+- ✅ 评估器测试通过
+
+---
+
 ### 2026-03-02 - Project 3: 多任务学习 - 方言翻译 + 口音分类
 
 **新增功能：**
@@ -1039,4 +1099,4 @@ python scripts/lesson_08_dialect_translation.py \
 
 **项目维护者：** jengzang (不羁)
 **最后更新：** 2026-03-02
-**LLM 训练路径进度：** 3/7 项目完成 (42.9%)
+**LLM 训练路径进度：** 4/7 项目完成 (57.1%)
