@@ -17,7 +17,7 @@
 - wav2vec 2.0
 - GPT-SoVITS
 
-**项目状态：** 核心模块已完成（8/10）
+**项目状态：** 核心模块已完成（8/10） + LLM 训练路径（3/7）
 
 ---
 
@@ -28,6 +28,10 @@
 - **[完成报告](docs/COMPLETION_REPORT.md)** - 项目实施总结和技术细节
 - **[项目路线图](docs/ROADMAP.md)** - 当前状态和未来计划
 - **[开发指南](CLAUDE.md)** - 开发规范和工作流
+- **[LLM 训练路径总体进展](docs/OVERALL_PROGRESS_REPORT.md)** - LLM 训练学习路径进度 ⭐ 新增
+- **[Project 1 报告](docs/PROJECT_01_COMPLETION_REPORT.md)** - 增强评估系统
+- **[Project 2 报告](docs/PROJECT_02_COMPLETION_REPORT.md)** - 超参数优化
+- **[Project 3 报告](docs/PROJECT_03_COMPLETION_REPORT.md)** - 多任务学习 ⭐ 新增
 
 ---
 
@@ -890,6 +894,101 @@ A:
 
 ## 更新日志
 
+---
+
+### 2026-03-02 - Project 3: 多任务学习 - 方言翻译 + 口音分类
+
+**新增功能：**
+- 多任务数据集（结合翻译和分类任务）
+- 多任务模型架构（共享编码器 + 任务特定头）
+- 多任务训练器（损失加权、梯度裁剪）
+- 完整的 CLI 工具（训练、评估、推理）
+
+**新增文件：**
+- `src/data_pipeline/multitask_dataset.py` - 多任务数据集
+- `src/models/multitask_dialect_model.py` - 多任务模型
+- `src/training/multitask_trainer.py` - 多任务训练器
+- `scripts/lesson_08_09_multitask.py` - CLI 脚本
+- `scripts/test_project_03.py` - 测试脚本
+- `docs/PROJECT_03_COMPLETION_REPORT.md` - Project 3 完成报告
+
+**技术亮点：**
+- 参数高效：仅 1.07% 可训练参数（1.1M / 103M）
+- 任务平衡：支持 4 种采样策略
+- FP16 混合精度训练
+- 自动设备管理
+
+**使用示例：**
+```bash
+# 训练多任务模型
+python scripts/lesson_08_09_multitask.py --mode train \
+    --translation_data data/dialect_parallel_train.json \
+    --classification_data data/accent_train.json \
+    --output_dir checkpoints/multitask \
+    --task_sampling balanced
+
+# 评估
+python scripts/lesson_08_09_multitask.py --mode evaluate \
+    --model_path checkpoints/multitask/best \
+    --translation_data data/dialect_parallel_test.json \
+    --classification_data data/accent_test.json
+
+# 推理 - 翻译
+python scripts/lesson_08_09_multitask.py --mode inference \
+    --model_path checkpoints/multitask/best \
+    --task translation \
+    --input "侬好啊"
+
+# 推理 - 分类
+python scripts/lesson_08_09_multitask.py --mode inference \
+    --model_path checkpoints/multitask/best \
+    --task classification \
+    --input "侬好啊，今朝天气老好额"
+```
+
+**测试结果：**
+- ✅ 数据集测试通过
+- ✅ 翻译任务 loss: 10.96
+- ✅ 分类任务 loss: 1.38
+- ✅ 所有测试通过
+
+---
+
+### 2026-03-02 - Project 2: 超参数优化与 LoRA 架构搜索
+
+**新增功能：**
+- Optuna 贝叶斯优化集成
+- LoRA 权重分析和可视化
+- 帕累托前沿识别
+- 完整的超参数搜索流程
+
+**新增文件：**
+- `src/training/hyperparameter_search.py` - Optuna 集成
+- `src/evaluation/lora_analysis.py` - LoRA 分析
+- `scripts/lesson_08_hp_search.py` - 超参数搜索 CLI
+- `docs/PROJECT_02_COMPLETION_REPORT.md` - Project 2 完成报告
+
+**优化结果：**
+- 最佳配置：Rank=32, Alpha=128, LR=1.77e-4
+- 模拟 BLEU: 40.00
+- 帕累托前沿：17 个最优配置
+
+**使用示例：**
+```bash
+# 运行超参数搜索（模拟模式）
+python scripts/lesson_08_hp_search.py \
+    --mode simulate \
+    --n_trials 30 \
+    --output_dir results/hp_search_demo
+
+# 分析结果
+python scripts/lesson_08_hp_search.py \
+    --mode analyze \
+    --study_dir results/hp_search_demo
+```
+
+---
+
 ### 2026-03-02 - Project 1: 增强方言翻译评估系统
 
 **新增功能：**
@@ -940,3 +1039,4 @@ python scripts/lesson_08_dialect_translation.py \
 
 **项目维护者：** jengzang (不羁)
 **最后更新：** 2026-03-02
+**LLM 训练路径进度：** 3/7 项目完成 (42.9%)
